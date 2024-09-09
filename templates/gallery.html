@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Gallery{% endblock %}
+
+{% block content %}
+
+<!--   triage et barre de recherche   -->
+<div class="container text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <form action="{{ url_for('gallery') }}" method="GET" class="d-flex flex-column align-items-center">
+                            <label for="sortSelect" class="form-label">Trier par:</label>
+                            <select id="sortSelect" name="sort" class="form-select mb-2" style="width: 150px;">
+                                <option value="none">none</option>
+                                <option value="az">Trier de A-Z</option>
+                                <option value="za">Trier de Z-A</option>
+                                <option value="recent">Trier par date (les plus récentes)</option>
+                                <option value="old">Trier par date (les plus anciennes)</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">Trier</button>
+                        </form>
+                    </div>
+                    <div class="mb-3">
+                        <form action="{{ url_for('gallery') }}" method="GET" class="d-flex flex-column align-items-center">
+                            <input type="text" id="searchInput" name="search" class="form-control mb-2" placeholder="Saisir un Prénom..." value="{{ search_query }}" style="width: 250px;">
+                            <div id="searchSuggestions" class="list-group" style="position: absolute; z-index: 1000; width: 250px; display: none;"></div>
+                            <button type="submit" class="btn btn-primary">Rechercher</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br> <br>
+
+<!--     -->
+   {% for user in users %}
+       <div class="accordion" id="accordion{{ user.id }}">
+           <div class="accordion-item">
+               <h2 class="accordion-header" id="heading{{ user.id }}">
+                   <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ user.id }}" aria-expanded="true" aria-controls="collapse{{ user.id }}">
+                       {{ user.username }}
+                   </button>
+               </h2>
+               <div id="collapse{{ user.id }}" class="accordion-collapse collapse show" aria-labelledby="heading{{ user.id }}" data-bs-parent="#accordion{{ user.id }}">
+                   <div class="accordion-body">
+                       <div class="row">
+                           {% for photo in user.photos %}
+                               <div class="col-md-3 mb-3">
+                                   <a href="#" class="thumbnail-link" data-image="{{ url_for('static', filename='images/' + photo.image) }}">
+                                       <img src="{{ url_for('static', filename='images/' + photo.image) }}" class="img-thumbnail" alt="Photo">
+                                   </a>
+                               </div>
+                           {% endfor %}
+                       </div>
+                   </div>
+               </div>
+           </div>
+       </div>
+   {% endfor %}
+
+   <!-- Conteneur pour afficher la photo agrandie -->
+   <div id="enlarged-photo-container" class="enlarged-photo-container">
+       <span class="close-btn" onclick="closeEnlargedPhoto()">&times;</span>
+       <img id="enlarged-photo" class="enlarged-photo" src="" alt="Enlarged Photo">
+   </div>
+
+    <script>
+        // JavaScript pour afficher la photo agrandie
+        document.addEventListener("DOMContentLoaded", function () {
+            var thumbnailLinks = document.querySelectorAll('.thumbnail-link');
+
+            thumbnailLinks.forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    var imageSource = this.getAttribute('data-image');
+                    showEnlargedPhoto(imageSource);
+                });
+            });
+        });
+
+        function showEnlargedPhoto(imageSource) {
+            var enlargedPhotoContainer = document.getElementById('enlarged-photo-container');
+            var enlargedPhoto = document.getElementById('enlarged-photo');
+
+            enlargedPhoto.src = imageSource;
+            enlargedPhotoContainer.style.display = 'block';
+        }
+
+        function closeEnlargedPhoto() {
+            var enlargedPhotoContainer = document.getElementById('enlarged-photo-container');
+            enlargedPhotoContainer.style.display = 'none';
+        }
+
+    </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var searchInput = document.getElementById('searchInput');
+        var searchSuggestions = document.getElementById('searchSuggestions');
+
+        searchInput.addEventListener('input', function () {
+            var searchValue = this.value.trim().toLowerCase();
+
+            // Effectuer une requête AJAX pour récupérer les suggestions
+            fetch('/get_users')
+                .then(response => response.json())
+                .then(users => {
+                    var filteredUsers = users.filter(function (user) {
+                        return user.toLowerCase().includes(searchValue);
+                    });
+
+                    var suggestionsHTML = '';
+                    filteredUsers.forEach(function (user) {
+                        suggestionsHTML += '<a href="#" class="list-group-item list-group-item-action">' + user + '</a>';
+                    });
+
+                    if (searchValue.length > 0) {
+                        searchSuggestions.innerHTML = suggestionsHTML;
+                        searchSuggestions.style.display = 'block';
+                    } else {
+                        searchSuggestions.innerHTML = '';
+                        searchSuggestions.style.display = 'none';
+                    }
+                });
+        });
+
+        searchSuggestions.addEventListener('click', function (event) {
+            if (event.target.tagName === 'A') {
+                searchInput.value = event.target.innerText;
+                searchSuggestions.innerHTML = '';
+                searchSuggestions.style.display = 'none';
+            }
+        });
+
+        // Fermer les suggestions si on clique en dehors
+        document.addEventListener('click', function (event) {
+            if (!searchSuggestions.contains(event.target)) {
+                searchSuggestions.innerHTML = '';
+                searchSuggestions.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

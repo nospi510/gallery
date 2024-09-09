@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de Bord{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+
+    <div class="card p-4 mx-auto" style="background-color: #34495e; max-width: 400px;">
+        
+        <div class="mt-4">
+            <a href="{{ url_for('add_photo') }}" class="btn btn-primary">Ajouter une Photo</a>
+            <br><br><br>
+            <a href="{{ url_for('edit_profile') }}" class="btn btn-secondary">Modifier le Profil</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Déconnexion</a>
+        </div>
+    </div>
+    
+    <br><br>
+    <!-- Barre de sélection pour filtrer les photos -->
+    <form action="{{ url_for('dashboard') }}" method="GET">
+        <label for="sort_order">Trier par:</label>
+        <select name="sort_order" id="sort_order">
+            <option value="recent">Plus récente</option>
+            <option value="old">Plus ancienne</option>
+        </select>
+        <input type="submit" value="Appliquer">
+    </form>
+    <br><br>
+
+    <br><br>
+        <!-- Liens rapides vers d'autres sections du Tableau de Bord -->
+        <h3 class="mb-4">Vos Photos Récentes</h3>
+    <br><br>
+    <div class="row">
+        {% for photo in user_photos %}
+            <div class="col-md-3 mb-3">
+                <a href="#" class="thumbnail-link" data-image="{{ url_for('static', filename='images/' + photo.image) }}">
+                    <img src="{{ url_for('static', filename='images/' + photo.image) }}" class="img-thumbnail" alt="Photo">
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+
+    
+
+    <!-- Conteneur pour afficher la photo agrandie (restez avec le script précédent) -->
+    <div id="enlarged-photo-container" class="enlarged-photo-container">
+        <span class="close-btn" onclick="closeEnlargedPhoto()">&times;</span>
+        <img id="enlarged-photo" class="enlarged-photo" src="" alt="Enlarged Photo">
+    </div>
+
+    <script>
+        // JavaScript pour afficher la photo agrandie
+        document.addEventListener("DOMContentLoaded", function () {
+            var thumbnailLinks = document.querySelectorAll('.thumbnail-link');
+
+            thumbnailLinks.forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    var imageSource = this.getAttribute('data-image');
+                    showEnlargedPhoto(imageSource);
+                });
+            });
+        });
+
+        function showEnlargedPhoto(imageSource) {
+            var enlargedPhotoContainer = document.getElementById('enlarged-photo-container');
+            var enlargedPhoto = document.getElementById('enlarged-photo');
+
+            enlargedPhoto.src = imageSource;
+            enlargedPhotoContainer.style.display = 'block';
+        }
+
+        function closeEnlargedPhoto() {
+            var enlargedPhotoContainer = document.getElementById('enlarged-photo-container');
+            enlargedPhotoContainer.style.display = 'none';
+        }
+
+
+        // JavaScript pour changer l'option de tri
+        function changeSort() {
+            var sortSelect = document.getElementById('sortSelect');
+            var selectedOption = sortSelect.options[sortSelect.selectedIndex].value;
+            window.location.href = '/gallery?sort=' + selectedOption;
+        }
+    </script>
+{% endblock %}
