@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_from_directory, jsonify
 from flask_login import login_required, current_user
 from ..models.models import Photo, User
 from ..forms.forms import AddPhotoForm, EditProfileForm
@@ -18,7 +18,7 @@ def view_photo(photo_id):
     return send_from_directory('static/images', photo.image)
 
 # Route pour le tableau de bord de l'utilisateur
-@gallery_bp.route('/dashboard')
+@gallery_bp.route('/dashboard', methods=['GET'])
 @login_required
 def dashboard():
     sort_order = request.args.get('sort_order', 'recent')
@@ -28,6 +28,12 @@ def dashboard():
         user_photos = Photo.query.filter_by(user_id=current_user.id).order_by(Photo.date_posted.asc()).all()
     else:
         user_photos = Photo.query.filter_by(user_id=current_user.id).all()
+
+    if request.is_json:
+        return jsonify({
+            "status": "success",
+            "photos": [photo.to_dict() for photo in user_photos]  # Assurez-vous d'avoir une méthode to_dict() dans votre modèle Photo
+        }), 200
 
     return render_template('dashboard.html', user_photos=user_photos)
 
@@ -45,7 +51,18 @@ def edit_profile():
 
         db.session.commit()
         flash('Profil mis à jour avec succès!', 'success')
+
+        if request.is_json:
+            return jsonify({"status": "success", "message": "Profil mis à jour avec succès!"}), 200
+
         return redirect(url_for('gallery.dashboard'))
+
+    if request.method == 'GET' and request.is_json:
+        return jsonify({
+            "status": "success",
+            "username": current_user.username,
+            # Ajoutez d'autres détails de profil si nécessaire
+        }), 200
 
     form.username.data = current_user.username
     return render_template('edit_profile.html', form=form)
@@ -93,7 +110,17 @@ def add_photo():
                 db.session.commit()
 
         flash('Photos ajoutées avec succès!', 'success')
+
+        if request.is_json:
+            return jsonify({"status": "success", "message": "Photos ajoutées avec succès!"}), 200
+
         return redirect(url_for('gallery.gallery'))
+
+    if request.method == 'GET' and request.is_json:
+        return jsonify({
+            "status": "success",
+            "message": "Ajoutez une nouvelle photo.",
+        }), 200
 
     return render_template('add_photo.html', form=form)
 
@@ -117,5 +144,13 @@ def gallery():
             users = User.query.join(Photo).group_by(User.id).order_by(func.max(Photo.date_posted).asc()).all()
         else:
             users = User.query.all()
+
+    if request.is_json:
+        return jsonify({
+            "status": "success",
+            "users": [user.to_dict() for user in users],  # Assurez-vous d'avoir une méthode to_dict() dans votre modèle User
+            "sort_option": sort_option,
+            "search_query": search_query
+        }), 200
 
     return render_template('gallery.html', users=users, sort_option=sort_option, search_query=search_query)

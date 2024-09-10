@@ -19,8 +19,24 @@ class User(UserMixin, db.Model):
     def is_admin(self):
         return self.role == 'admin'
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'role': self.role,
+            'photos': [photo.to_dict() for photo in self.photos]  # Convert photos to dictionaries
+        }
+
 class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     image = db.Column(db.String(255), nullable=False, default='default.jpg')
     date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'image': self.image,
+            'date_posted': self.date_posted.isoformat(),  # Convert datetime to ISO format string
+            'user_id': self.user_id
+        }

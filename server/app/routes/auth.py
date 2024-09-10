@@ -1,63 +1,89 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, jsonify, render_template, request, url_for
 from flask_login import login_user, login_required, logout_user, current_user
 from ..forms.forms import RegistrationForm, LoginForm
 from ..models.models import User
-from ..extensions import db,login_manager
+from ..extensions import db, login_manager
 from passlib.hash import sha256_crypt
 from sqlalchemy.exc import IntegrityError
 
-
-
 auth_bp = Blueprint('auth', __name__)
+
+@auth_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # Vérification que le Content-Type est bien JSON
+        if request.content_type != 'application/json':
+            return jsonify({"error": "Content-Type must be application/json"}), 415
+
+        # Récupérer les données JSON du corps de la requête
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+
+        # Validation des informations de connexion
+        user = User.query.filter_by(username=username).first()
+        if user and sha256_crypt.verify(password, user.password):
+            login_user(user)
+            return jsonify({
+                "message": "Connexion réussie",
+                "status": "success",
+                "redirect": url_for('gallery.dashboard') 
+            }), 200
+        else:
+            return jsonify({"message": "Echec de connexion. Vérifiez vos identifiants", "status": "error"}), 401
+
+    # Pour les requêtes GET, retournez le formulaire HTML
+    form = LoginForm()
+    return render_template('login.html', form=form)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 @login_required
 def register():
-    if current_user.role == 'admin':
-        form = RegistrationForm()
-        if form.validate_on_submit():
-            existing_user = User.query.filter_by(username=form.username.data).first()
-            if existing_user:
-                flash('Ce nom d\'utilisateur est déjà pris. Veuillez choisir un autre.', 'danger')
-                return render_template('register.html', form=form)
+    if current_user.role != 'admin':
+        return jsonify({"message": "Non autorisé", "status": "error"}), 403
 
-            hashed_password = sha256_crypt.hash(form.password.data)
-            new_user = User(username=form.username.data, password=hashed_password, role=form.role.data)
-            db.session.add(new_user)
+    if request.method == 'POST':
+        if request.content_type != 'application/json':
+            return jsonify({"error": "Content-Type must be application/json"}), 415
+        
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        role = data.get('role')
 
-            try:
-                db.session.commit()
-                flash('Compte créé avec succès!', 'success')
-                return redirect(url_for('auth.login'))
-            except IntegrityError:
-                db.session.rollback()
-                flash('Erreur lors de la création du compte. Veuillez réessayer.', 'danger')
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            return jsonify({"message": "Ce nom d'utilisateur est déjà pris", "status": "error"}), 400
 
-        return render_template('register.html', form=form)
+        hashed_password = sha256_crypt.hash(password)
+        new_user = User(username=username, password=hashed_password, role=role)
+        db.session.add(new_user)
 
-    else:
-        flash('Vous n\'êtes pas autorisé à enregistrer un utilisateur.', 'danger')
-        return redirect(url_for('gallery.gallery'))
+        try:
+            db.session.commit()
+            return jsonify({
+                "message": "Compte créé avec succès",
+                "status": "success",
+                "redirect": url_for('auth.login')  # Redirection vers la page de connexion
+            }), 201
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({"message": "Erreur lors de la création du compte", "status": "error"}), 500
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user and sha256_crypt.verify(form.password.data, user.password):
-            login_user(user)
-            flash('Connexion avec succès !', 'success')
-            return redirect(url_for('gallery.dashboard'))
-        else:
-            flash("Echec de connexion. Verifier votre nom d'utilisateur ou votre mot de passe.", 'danger')
-    return render_template('login.html', form=form)
+    # Pour les requêtes GET, retournez le formulaire HTML
+    form = RegistrationForm()
+    return render_template('register.html', form=form)
 
 @auth_bp.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('Vous avez été déconnecté avec succès!', 'success')
-    return redirect(url_for('auth.login'))
+    return jsonify({
+        "message": "Déconnexion réussie",
+        "status": "success",
+        "redirect": url_for('auth.login')  # Redirection vers la page de connexion
+    }), 200
+
 
 @login_manager.user_loader
 def load_user(user_id):
