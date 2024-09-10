@@ -11,3 +11,11 @@
 
 
 * Executer l'application Mobile
+
+- Se rendre dans le dossier server/ : # cd client/app
+
+- Installer ionic (si ce n'est pas dans le systeme ): npm install -g @ionic/cli
+
+- faire : npm install 
+
+- Executer l'app avec : ionic serve --external
