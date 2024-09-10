@@ -4,7 +4,7 @@
 
 {% block content %}
     <h2>Modifier le Profil de {{ current_user.username }}</h2>
-    <form method="POST" action="{{ url_for('edit_profile') }}">
+    <form method="POST" action="{{ url_for('gallery.edit_profile') }}">
         {{ form.hidden_tag() }}
         <div class="mb-3">
             <label for="username" class="form-label">Nom d'utilisateur</label>
@@ -19,6 +19,6 @@
             {{ form.confirm_password(class="form-control") }}
         </div>
         <button type="submit" class="btn btn-primary">Enregistrer les Modifications</button>
-        <a href="{{ url_for('dashboard') }}" class="btn btn-danger">Retour</a>
+        <a href="{{ url_for('gallery.dashboard') }}" class="btn btn-danger">Retour</a>
     </form>
 {% endblock %}

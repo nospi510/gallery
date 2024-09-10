@@ -1,0 +1,6 @@
+venv
+__pycache__
+forms/__pycache__
+models/__pycache__
+routes/__pycache__
+utils/__pycache__

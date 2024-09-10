@@ -11,7 +11,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="mb-3">
-                        <form action="{{ url_for('gallery') }}" method="GET" class="d-flex flex-column align-items-center">
+                        <form action="{{ url_for('gallery.gallery') }}" method="GET" class="d-flex flex-column align-items-center">
                             <label for="sortSelect" class="form-label">Trier par:</label>
                             <select id="sortSelect" name="sort" class="form-select mb-2" style="width: 150px;">
                                 <option value="none">none</option>
@@ -24,7 +24,7 @@
                         </form>
                     </div>
                     <div class="mb-3">
-                        <form action="{{ url_for('gallery') }}" method="GET" class="d-flex flex-column align-items-center">
+                        <form action="{{ url_for('gallery.gallery') }}" method="GET" class="d-flex flex-column align-items-center">
                             <input type="text" id="searchInput" name="search" class="form-control mb-2" placeholder="Saisir un Prénom..." value="{{ search_query }}" style="width: 250px;">
                             <div id="searchSuggestions" class="list-group" style="position: absolute; z-index: 1000; width: 250px; display: none;"></div>
                             <button type="submit" class="btn btn-primary">Rechercher</button>
