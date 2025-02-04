@@ -22,7 +22,7 @@ import pyheif
 
 
 app = Flask(__name__, static_folder='static')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://nick:passer@192.168.1.23/gallery?charset=utf8mb4'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://nick:passer@localhost/gallery?charset=utf8mb4&collation=utf8mb4_general_ci'
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://nick:passer@192.168.1.30/gallery?charset=utf8mb4'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = secrets.token_hex(24)

@@ -46,7 +46,7 @@
                        {{ user.username }}
                    </button>
                </h2>
-               <div id="collapse{{ user.id }}" class="accordion-collapse collapse show" aria-labelledby="heading{{ user.id }}" data-bs-parent="#accordion{{ user.id }}">
+               <div id="collapse{{ user.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ user.id }}" data-bs-parent="#accordion{{ user.id }}">
                    <div class="accordion-body">
                        <div class="row">
                            {% for photo in user.photos %}
