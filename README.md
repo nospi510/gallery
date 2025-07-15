@@ -139,7 +139,7 @@ Crée les dossiers nécessaires :
 
 ```bash
 cd /home/nospi/projets/gallery/server
-mkdir -p nginx/conf.d nginx/logs certs
+mkdir -p nginx/conf.d 
 ```
 
 ### Étape 2 : Construire et tester localement
