@@ -17,6 +17,21 @@ def view_photo(photo_id):
     photo = Photo.query.get_or_404(photo_id)
     return send_from_directory('static/images', photo.image)
 
+# Route pour charger plus de photos via AJAX
+@gallery_bp.route('/load_more_photos/<int:user_id>', methods=['GET'])
+@login_required
+def load_more_photos(user_id):
+    offset = int(request.args.get('offset', 0))
+    limit = 4  # Charger 4 photos à la fois
+    photos = Photo.query.filter_by(user_id=user_id).order_by(Photo.date_posted.desc()).offset(offset).limit(limit).all()
+    has_more = Photo.query.filter_by(user_id=user_id).count() > offset + len(photos)
+    
+    return jsonify({
+        'status': 'success',
+        'photos': [{'image': photo.image} for photo in photos],
+        'has_more': has_more
+    })
+
 # Route pour le tableau de bord de l'utilisateur
 @gallery_bp.route('/dashboard', methods=['GET'])
 @login_required
@@ -32,10 +47,10 @@ def dashboard():
     if request.is_json:
         return jsonify({
             "status": "success",
-            "photos": [photo.to_dict() for photo in user_photos]  # Assurez-vous d'avoir une méthode to_dict() dans votre modèle Photo
+            "photos": [photo.to_dict() for photo in user_photos]
         }), 200
 
-    return render_template('dashboard.html', user_photos=user_photos)
+    return render_template('dashboard.html', user_photos=user_photos, sort_order=sort_order)
 
 # Route pour modifier le profil de l'utilisateur
 @gallery_bp.route('/edit_profile', methods=['GET', 'POST'])
@@ -61,7 +76,6 @@ def edit_profile():
         return jsonify({
             "status": "success",
             "username": current_user.username,
-            # Ajoutez d'autres détails de profil si nécessaire
         }), 200
 
     form.username.data = current_user.username
@@ -148,7 +162,7 @@ def gallery():
     if request.is_json:
         return jsonify({
             "status": "success",
-            "users": [user.to_dict() for user in users],  # Assurez-vous d'avoir une méthode to_dict() dans votre modèle User
+            "users": [user.to_dict() for user in users],
             "sort_option": sort_option,
             "search_query": search_query
         }), 200

@@ -3,22 +3,28 @@
 {% block title %}Modifier le Profil{% endblock %}
 
 {% block content %}
-    <h2>Modifier le Profil de {{ current_user.username }}</h2>
-    <form method="POST" action="{{ url_for('gallery.edit_profile') }}">
-        {{ form.hidden_tag() }}
-        <div class="mb-3">
-            <label for="username" class="form-label">Nom d'utilisateur</label>
-            {{ form.username(class="form-control", readonly="readonly") }}
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Nouveau Mot de Passe</label>
-            {{ form.password(class="form-control") }}
-        </div>
-        <div class="mb-3">
-            <label for="confirm_password" class="form-label">Confirmer le Mot de Passe</label>
-            {{ form.confirm_password(class="form-control") }}
-        </div>
-        <button type="submit" class="btn btn-primary">Enregistrer les Modifications</button>
-        <a href="{{ url_for('gallery.dashboard') }}" class="btn btn-danger">Retour</a>
-    </form>
+<div class="container">
+    <div class="card p-4 mx-auto mt-5 w-50">
+        <h2 class="mb-4 text-center">Modifier le Profil de {{ current_user.username }}</h2>
+        <form method="POST" action="{{ url_for('gallery.edit_profile') }}">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                <label for="username" class="form-label">Nom d'utilisateur</label>
+                {{ form.username(class="form-control", readonly="readonly") }}
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Nouveau Mot de Passe</label>
+                {{ form.password(class="form-control") }}
+            </div>
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">Confirmer le Mot de Passe</label>
+                {{ form.confirm_password(class="form-control") }}
+            </div>
+            <div class="d-flex gap-3 justify-content-center">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <a href="{{ url_for('gallery.dashboard') }}" class="btn btn-danger">Retour</a>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

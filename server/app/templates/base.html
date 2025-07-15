@@ -1,35 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Ajouter la balise link pour l'icône du site -->
-    <link rel="icon" href="{{ url_for('static', filename='images/img.jpg') }}" type="image/jpg">
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-
-    <!-- CSS de Bootstrap (à ajouter dans head) -->
+    <link rel="icon" href="{{ url_for('static', filename='images/logo/img.jpg') }}" type="image/jpg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- JS de Bootstrap (à ajouter à la fin du body) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    
-    <title>{% block title %}FAMILY GALLERY{% endblock %}</title>
-    <!-- Ajouter les liens vers les fichiers CSS de Bootstrap ici -->
-
-    <style>
-        body {
-            background-color: #eaf6ff; /* Changez la couleur selon vos préférences */
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <title>{% block title %}Galerie Familiale{% endblock %}</title>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('gallery.gallery') }}">Happy Family</a>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center ms-0" href="{{ url_for('gallery.gallery') }}">
+                <img src="{{ url_for('static', filename='images/logo/img.jpg') }}" alt="Logo" class="navbar-logo me-2">
+                Galerie Familiale
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -41,27 +29,24 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('gallery.dashboard') }}">Mes Photos</a>
                     </li>
-                    <!-- Ajouter d'autres liens de navigation au besoin -->
                 </ul>
-
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-			    <a class="nav-link" href="{{ url_for('auth.register') }}">Ajouter un<br> Membre</a>
+                        <a class="nav-link" href="{{ url_for('auth.register') }}">Ajouter un Membre</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">Déconnexion</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-3">
+    <div class="container mt-4">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
-                    {% if 'succès' in message.lower() %} {# Vérifiez si le message contient 'succés' (insensible à la casse) #}
-                        <div class="alert alert-success mx-auto w-50" role="alert">
-                    {% else %}
-                        <div class="alert alert-danger mx-auto w-50" role="alert">
-                    {% endif %}
+                    <div class="alert {% if 'succès' in message.lower() %}alert-success{% else %}alert-danger{% endif %} mx-auto w-75" role="alert">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -69,8 +54,9 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </div>
-    
-    
-    
+
+    <footer>
+        <p>&copy; 2025 Nospi Nick, Galerie Familiale. Tous droits réservés.</p>
+    </footer>
 </body>
 </html>

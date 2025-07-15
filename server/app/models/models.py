@@ -1,6 +1,6 @@
 from app.extensions import db
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 from passlib.hash import sha256_crypt 
 
 class User(UserMixin, db.Model):
@@ -40,3 +40,11 @@ class Photo(db.Model):
             'date_posted': self.date_posted.isoformat(),  # Convert datetime to ISO format string
             'user_id': self.user_id
         }
+
+class ResetCode(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    code = db.Column(db.String(6), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(hours=1))
+    user = db.relationship('User', backref=db.backref('reset_codes', lazy=True))

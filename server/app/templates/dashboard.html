@@ -4,84 +4,65 @@
 
 {% block content %}
 <div class="container text-center mt-5">
-
-    <div class="card p-4 mx-auto" style="background-color: #34495e; max-width: 400px;">
-        
-        <div class="mt-4">
+    <div class="card p-4 mx-auto" style="max-width: 500px;">
+        <h2 class="mb-4">Tableau de Bord</h2>
+        <div class="d-flex flex-column gap-3">
             <a href="{{ url_for('gallery.add_photo') }}" class="btn btn-primary">Ajouter une Photo</a>
-            <br><br><br>
             <a href="{{ url_for('gallery.edit_profile') }}" class="btn btn-secondary">Modifier le Profil</a>
             <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Déconnexion</a>
         </div>
     </div>
-    
-    <br><br>
-    <!-- Barre de sélection pour filtrer les photos -->
-    <form action="{{ url_for('gallery.dashboard') }}" method="GET">
-        <label for="sort_order">Trier par:</label>
-        <select name="sort_order" id="sort_order">
-            <option value="recent">Plus récente</option>
-            <option value="old">Plus ancienne</option>
-        </select>
-        <input type="submit" value="Appliquer">
-    </form>
-    <br><br>
 
-    <br><br>
-        <!-- Liens rapides vers d'autres sections du Tableau de Bord -->
+    <div class="card p-4 mt-4">
         <h3 class="mb-4">Vos Photos Récentes</h3>
-    <br><br>
-    <div class="row">
-        {% for photo in user_photos %}
-            <div class="col-md-3 mb-3">
-                <a href="#" class="thumbnail-link" data-image="{{ url_for('static', filename='images/' + photo.image) }}">
-                    <img src="{{ url_for('static', filename='images/' + photo.image) }}" class="img-thumbnail" alt="Photo">
-                </a>
-            </div>
-        {% endfor %}
+        <form action="{{ url_for('gallery.dashboard') }}" method="GET" class="mb-4">
+            <label for="sort_order" class="form-label">Trier par :</label>
+            <select name="sort_order" id="sort_order" class="form-select d-inline-block w-auto">
+                <option value="recent" {% if sort_order == 'recent' %}selected{% endif %}>Plus récente</option>
+                <option value="old" {% if sort_order == 'old' %}selected{% endif %}>Plus ancienne</option>
+            </select>
+            <button type="submit" class="btn btn-primary ms-2">Appliquer</button>
+        </form>
+        <div class="row">
+            {% for photo in user_photos %}
+                <div class="col-md-3 mb-3">
+                    <a href="#" class="thumbnail-link" data-image="{{ url_for('static', filename='images/' + photo.image) }}">
+                        <img src="{{ url_for('static', filename='images/' + photo.image) }}" class="img-thumbnail" alt="Photo">
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 
-    
-
-    <!-- Conteneur pour afficher la photo agrandie (restez avec le script précédent) -->
     <div id="enlarged-photo-container" class="enlarged-photo-container">
-        <span class="close-btn" onclick="closeEnlargedPhoto()">&times;</span>
-        <img id="enlarged-photo" class="enlarged-photo" src="" alt="Enlarged Photo">
+        <span class="close-btn" onclick="closeEnlargedPhoto()">×</span>
+        <img id="enlarged-photo" class="enlarged-photo" src="" alt="Photo agrandie">
     </div>
+</div>
 
-    <script>
-        // JavaScript pour afficher la photo agrandie
-        document.addEventListener("DOMContentLoaded", function () {
-            var thumbnailLinks = document.querySelectorAll('.thumbnail-link');
-
-            thumbnailLinks.forEach(function (link) {
-                link.addEventListener('click', function (event) {
-                    event.preventDefault();
-                    var imageSource = this.getAttribute('data-image');
-                    showEnlargedPhoto(imageSource);
-                });
-            });
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const thumbnailLinks = document.querySelectorAll('.thumbnail-link');
+    thumbnailLinks.forEach(link => {
+        link.addEventListener('click', function (event) {
+            event.preventDefault();
+            const imageSource = this.getAttribute('data-image');
+            showEnlargedPhoto(imageSource);
         });
+    });
+});
 
-        function showEnlargedPhoto(imageSource) {
-            var enlargedPhotoContainer = document.getElementById('enlarged-photo-container');
-            var enlargedPhoto = document.getElementById('enlarged-photo');
+function showEnlargedPhoto(imageSource) {
+    const enlargedPhotoContainer = document.getElementById('enlarged-photo-container');
+    const enlargedPhoto = document.getElementById('enlarged-photo');
+    enlargedPhoto.src = imageSource;
+    enlargedPhotoContainer.style.display = 'flex';
+}
 
-            enlargedPhoto.src = imageSource;
-            enlargedPhotoContainer.style.display = 'block';
-        }
+function closeEnlargedPhoto() {
+    const enlargedPhotoContainer = document.getElementById('enlarged-photo-container');
+    enlargedPhotoContainer.style.display = 'none';
+}
 
-        function closeEnlargedPhoto() {
-            var enlargedPhotoContainer = document.getElementById('enlarged-photo-container');
-            enlargedPhotoContainer.style.display = 'none';
-        }
-
-
-        // JavaScript pour changer l'option de tri
-        function changeSort() {
-            var sortSelect = document.getElementById('sortSelect');
-            var selectedOption = sortSelect.options[sortSelect.selectedIndex].value;
-            window.location.href = '/gallery?sort=' + selectedOption;
-        }
-    </script>
+</script>
 {% endblock %}

@@ -1,0 +1,85 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"  # Expose le port 8001 pour tests locaux
+    volumes:
+      - ./app:/app/app
+      - ./run.py:/app/run.py
+    environment:
+      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
+      - SECRET_KEY=${SECRET_KEY}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+    depends_on:
+      - db
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./gallery.sql:/docker-entrypoint-initdb.d/gallery.sql
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certs:/etc/letsencrypt
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - web
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certs:/etc/letsencrypt
+    depends_on:
+      - nginx
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h; done;'"
+    restart: unless-stopped
+
+  cron:
+    image: alpine:3.18
+    volumes:
+      - ./gallery.sql:/gallery.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    command: >
+      /bin/sh -c '
+      apk add --no-cache mysql-client &&
+      echo "0 0 * * 0 mysqldump -h db -u $$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE > /gallery.sql" > /etc/crontab &&
+      crond -f -d 8
+      '
+    depends_on:
+      - db
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:

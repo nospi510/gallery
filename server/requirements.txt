@@ -13,3 +13,5 @@ pyheif
 SQLAlchemy
 WTForms
 pillow
+python-dotenv
+sendgrid

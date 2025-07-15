@@ -3,70 +3,48 @@
 {% block title %}Ajouter une Photo{% endblock %}
 
 {% block content %}
-    <div class="card p-4 mx-auto mt-5 w-50 shadow">
-        <h2 class="mb-4">Importer une Photo</h2>
-
+<div class="container">
+    <div class="card p-4 mx-auto mt-5 w-50">
+        <h2 class="mb-4 text-center">Importer une Photo</h2>
         <form method="POST" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
-            
             <div id="photo-fields-container">
-                <!-- Champ pour une seule photo -->
-                <div class="mb-3">
+                <div class="mb-3 photo-field">
                     {{ form.image.label(class="form-label") }}
-                    {{ form.image(class="form-control-file", multiple="multiple") }}
-                    <button type="button" class="btn btn-danger" onclick="supprimerPhoto(this)">Supprimer</button>
+                    {{ form.image(class="form-control", multiple="multiple") }}
+                    <button type="button" class="btn btn-danger mt-2" onclick="supprimerPhoto(this)">Supprimer</button>
                 </div>
             </div>
-
-            <!-- Bouton pour ajouter dynamiquement un champ de photo -->
             <div class="mb-3">
                 <button type="button" class="btn btn-success" onclick="ajouterPhoto()">Ajouter une photo</button>
             </div>
-
-            <div class="mb-3">
+            <div class="mb-3 text-center">
                 {{ form.submit(class="btn btn-primary") }}
             </div>
         </form>
     </div>
+</div>
 
-    <script>
+<script>
+let photoCounter = 1;
 
+function ajouterPhoto() {
+    const container = document.getElementById('photo-fields-container');
+    const nouveauChampPhoto = document.createElement('div');
+    nouveauChampPhoto.className = 'mb-3 photo-field';
+    nouveauChampPhoto.innerHTML = `
+        <label class="form-label">Image</label>
+        <input type="file" class="form-control" name="image" multiple>
+        <button type="button" class="btn btn-danger mt-2" onclick="supprimerPhoto(this)">Supprimer</button>
+    `;
+    container.appendChild(nouveauChampPhoto);
+    photoCounter++;
+}
 
-        var photoCounter = 1;  // Compteur pour les indices des champs de photo
-    
-        function ajouterPhoto() {
-            var container = document.getElementById('photo-fields-container');
-            
-            // Créer un nouveau champ de photo
-            var nouveauChampPhoto = document.createElement('div');
-            nouveauChampPhoto.className = 'mb-3';
-
-            // Ajouter le champ pour la nouvelle photo
-            var inputPhoto = document.createElement('input');
-            inputPhoto.type = 'file';
-            inputPhoto.className = 'form-control-file';
-            inputPhoto.name = 'image';  // Utiliser le même nom pour tous les champs
-            inputPhoto.multiple = true;  // Ajouter l'attribut multiple
-            photoCounter++;
-
-            var boutonSupprimer = document.createElement('button');
-            boutonSupprimer.type = 'button';
-            boutonSupprimer.className = 'btn btn-danger';
-            boutonSupprimer.innerHTML = 'Supprimer';
-            boutonSupprimer.onclick = function() {
-                supprimerPhoto(nouveauChampPhoto);
-            };
-
-            // Ajouter le champ et le bouton à la nouvelle rangée
-            nouveauChampPhoto.appendChild(inputPhoto);
-            nouveauChampPhoto.appendChild(boutonSupprimer);
-
-            // Ajouter la nouvelle rangée au conteneur
-            container.appendChild(nouveauChampPhoto);
-        }
-
-
-
-    </script>
-    
+function supprimerPhoto(button) {
+    if (document.querySelectorAll('.photo-field').length > 1) {
+        button.parentElement.remove();
+    }
+}
+</script>
 {% endblock %}
