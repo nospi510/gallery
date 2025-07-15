@@ -6,3 +6,4 @@ routes/__pycache__
 utils/__pycache__
 certs
 nginx/logs
+.env
