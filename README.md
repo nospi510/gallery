@@ -315,7 +315,4 @@ cat /home/nospi/projets/visiotech/nginx/logs/error.log
 
 **Déployé avec ❤️ par Nick (nospi510)**
 
-```
-
----
 
