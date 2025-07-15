@@ -1,10 +1,8 @@
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8001:8001"  # Expose le port 8001 pour tests locaux
+    image: nospi510/gallery:latest
+    #ports:
+    #  - "8001:8001"  # Expose le port 8001 pour tests locaux
     volumes:
       - ./app:/app/app
       - ./run.py:/app/run.py
@@ -16,6 +14,7 @@ services:
       - db
     networks:
       - app-network
+      - visiotech-network
     restart: unless-stopped
 
   db:
@@ -30,21 +29,7 @@ services:
       - ./gallery.sql:/docker-entrypoint-initdb.d/gallery.sql
     networks:
       - app-network
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:latest
-    ports:
-      - "8080:80"
-      - "8443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./certs:/etc/letsencrypt
-      - ./nginx/logs:/var/log/nginx
-    depends_on:
-      - web
-    networks:
-      - app-network
+      - visiotech-network
     restart: unless-stopped
 
   certbot:
@@ -52,8 +37,11 @@ services:
     volumes:
       - ./certs:/etc/letsencrypt
     depends_on:
-      - nginx
+      - web
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h; done;'"
+    networks:
+      - app-network
+      - visiotech-network
     restart: unless-stopped
 
   cron:
@@ -75,11 +63,14 @@ services:
       - db
     networks:
       - app-network
+      - visiotech-network
     restart: unless-stopped
 
 networks:
   app-network:
     driver: bridge
+  visiotech-network:
+    external: true
 
 volumes:
   db-data:

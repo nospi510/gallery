@@ -1,11 +1,14 @@
+# 📸 Gallery - Application Flask
 
-# Gallery - Application Flask
+Application Flask déployée sur `famille.visiotech.me`, containerisée avec **Docker**, servie via **Gunicorn**, et intégrée à un **serveur Nginx centralisé** dans `/home/nospi/projets/visiotech` pour la gestion des domaines et certificats HTTPS via **Certbot**.  
+La base MySQL est initialisée avec `gallery.sql` et une tâche cron exporte régulièrement la base.  
+La sécurité est assurée par **Fail2Ban** via le `jail` défini dans le projet visiotech.
 
-Ce projet est une application Flask déployée sur `famille.visiotech.me`, containerisée avec Docker, servie via Gunicorn et Nginx, sécurisée avec des certificats HTTPS via Certbot, et protégée contre les intrusions avec Fail2Ban. La base de données MySQL est initialisée avec le fichier `gallery.sql` au démarrage, et une tâche cron exporte périodiquement la base de données dans `gallery.sql`.
+---
 
-## Structure du projet
+## 🧾 Structure du projet
 
-````bash
+```bash
 
 /home/nospi/projets/gallery/server/
 ├── app/
@@ -19,47 +22,47 @@ Ce projet est une application Flask déployée sur `famille.visiotech.me`, conta
 │   ├── templates/
 │   ├── utils/
 │   ├── V1/
-│   └── **pycache**/
+│   
 ├── gallery.sql
 ├── README.md
 ├── requirements.txt
 ├── run.py
 ├── Dockerfile
 ├── docker-compose.yml
-├── nginx/
-│   ├── conf.d/
-│   │   └── app.conf
-│   └── logs/
-├── certs/
-└── .env
+├── certs/         # 🔐 Non versionné (.gitignore)
+└── .env           # 🔐 Non versionné (.gitignore)
 
-````
-
-- **app/** : Code source de l'application Flask.
-- **gallery.sql** : Initialisation de la base de données et exportations périodiques.
-- **requirements.txt** : Dépendances Python.
-- **run.py** : Point d'entrée pour l'application Flask.
-- **Dockerfile** : Configuration pour construire l'image Docker.
-- **docker-compose.yml** : Orchestration des services.
-- **nginx/** : Configuration et journaux Nginx.
-- **certs/** : Certificats SSL générés par Certbot.
-- **.env** : Variables d'environnement (non versionnées).
+```
 
 ---
 
-## Prérequis
+## 🔧 Contenu des fichiers
 
-- **Système** : Serveur Linux (Ubuntu recommandé) avec Docker et Docker Compose installés.
-- **DNS** : Le domaine `famille.visiotech.me` doit pointer vers l'IP publique du serveur.
-- **DockerHub** : Compte DockerHub pour pousser l'image (`nospi510/gallery`).
-- **Ports** : 8080 (HTTP), 8443 (HTTPS), 8001 (Gunicorn pour tests locaux).
+- `app/` : Code source Flask
+- `gallery.sql` : Init/export de la base de données
+- `requirements.txt` : Dépendances Python
+- `run.py` : Entrée de l’app Flask
+- `Dockerfile` : Image Docker avec Gunicorn
+- `docker-compose.yml` : Orchestration des services
+- `certs/` : Certificats SSL (non versionnés)
+- `.env` : Variables d’environnement (non versionnées)
 
 ---
 
-## Installation des prérequis
+## 📌 Prérequis
+
+- **OS** : Ubuntu (ou tout serveur Linux avec Docker)
+- **Nom de domaine** : `famille.visiotech.me` → IP `102.x.x.x`
+- **Ports** : 
+  - `8001` pour les tests locaux
+  - `80/443` gérés par le Nginx de visiotech
+- **DockerHub** : Utilisateur `nospi510`
+
+---
+
+## ⚙️ Installation des prérequis
 
 ### 1. Mettre à jour le système
-
 ```bash
 sudo apt update && sudo apt upgrade -y
 ````
@@ -81,241 +84,238 @@ sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 
-### 4. Ajouter l'utilisateur au groupe Docker
+### 4. Ajouter l’utilisateur Docker
 
 ```bash
 sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-### 5. Installer Fail2Ban
+---
+
+## 🐳 Configuration Docker
+
+### `Dockerfile`
+
+* Image Python 3.9 avec `Gunicorn` et `mysqlclient`
+* Dépendances : `libmysqlclient-dev`, `pkg-config`, `gcc`
+* Expose le port `8001`
+
+### `docker-compose.yml`
+
+Définit 4 services :
+
+* `web` (Flask + Gunicorn)
+* `db` (MySQL)
+* `certbot` (Certificats SSL)
+* `cron` (export régulier)
+
+Connecté au réseau partagé `visiotech-network` pour interopérabilité avec `visiotech`.
+
+### `.env` (exemple)
+
+```env
+SQLALCHEMY_DATABASE_URI=mysql+mysqlconnector://user:password@db/gallery?charset=utf8mb4
+SECRET_KEY=your-secret-key-here
+SENDGRID_API_KEY=your-sendgrid-api-key
+MYSQL_ROOT_PASSWORD=rootpassword
+MYSQL_DATABASE=gallery
+MYSQL_USER=user
+MYSQL_PASSWORD=password
+```
+
+Générer une clé (a remplacer dans le SECRET_KEY):
 
 ```bash
-sudo apt install -y fail2ban
+openssl rand -hex 24
 ```
 
 ---
 
-## Configuration
+## 🌐 Vérification du réseau `visiotech-network`
 
-### Fichiers de configuration
+Ce réseau est **nécessaire** pour la connexion à Nginx. Il est **généralement déjà créé** par visiotech :
 
-* **Dockerfile** :
+```bash
+docker network ls
+```
 
-  * Construire une image Python 3.9 avec Gunicorn et MySQL (mysqlclient).
-  * Expose le port 8001 pour Gunicorn.
+S’il n’existe pas :
 
-* **docker-compose.yml** :
-
-  * Définit cinq services : `web`, `db`, `nginx`, `certbot`, `cron`.
-
-* **nginx/conf.d/app.conf** :
-
-  * Configure Nginx pour `famille.visiotech.me` avec un reverse proxy et redirection HTTP -> HTTPS.
-
-* **.env** :
-
-  * Variables d'environnement (ne pas versionner).
-  * Exemple :
-
-    ```env
-      SQLALCHEMY_DATABASE_URI=mysql+mysqlconnector://user:password@db/gallery?charset=utf8mb4&collation=utf8mb4_general_ci
-      SQLALCHEMY_DATABASE_URII=mysql+mysqlconnector://user:password@localhost/gallery?charset=utf8mb4&collation=utf8mb4_general_ci
-      SECRET_KEY=votre-cle-secrete
-      MYSQL_ROOT_PASSWORD=rootpass
-      MYSQL_DATABASE=gallery
-      MYSQL_USER=user
-      MYSQL_PASSWORD=password
-      SENDGRID_API_KEY= votre-cle-API
-    ```
+```bash
+docker network create visiotech-network
+```
 
 ---
 
-## Déploiement
+## 🛠️ Déploiement
 
-### Étape 1 : Créer les fichiers de configuration
-
-Crée les dossiers nécessaires :
+### Étape 1 : Préparation
 
 ```bash
 cd /home/nospi/projets/gallery/server
-mkdir -p nginx/conf.d 
+mkdir -p certs
+echo ".env" >> .gitignore
+echo "certs/" >> .gitignore
 ```
 
-### Étape 2 : Construire et tester localement
+---
 
-1. **Lancer les conteneurs** :
+### Étape 2 : Build et test local
 
-   ```bash
-   cd /home/nospi/projets/gallery/server
-   docker-compose up --build -d
-   ```
+```bash
+docker compose up --build -d
+docker ps
+```
 
-2. **Vérifier les conteneurs** :
+Attendu : `server-web-1`, `server-db-1`, `server-certbot-1`, `server-cron-1`
 
-   ```bash
-   docker ps
-   ```
+#### Tester localement :
 
-3. **Tester l'application** :
+Décommente temporairement :
 
-   Accédez à `http://localhost:8001` pour tester Flask.
+```yaml
+ports:
+  - "8001:8001"
+```
 
-4. **Redémarrer sans le port 8001** :
+```bash
+docker compose up -d
+```
 
-   * Commenter cette ligne dans `docker-compose.yml` :
+Accéder à : [http://localhost:8001](http://localhost:8001)
 
-     ```yaml
-     ports:
-       - "8001:8001"
-     ```
-   * Puis redémarre :
+Si tout fonction recommente  :
 
-     ```bash
-     docker-compose up -d
-     ```
+```yaml
+ports:
+#  - "8001:8001"
+```
+---
+
+### Étape 3 : Configuration Nginx + HTTPS
+
+#### Nginx (dans visiotech/nginx/conf.d/app.conf)
+
+Modifier le server du port 80 et apres generation du certificat ajouter la section server du port 443
+
+```nginx
+server {
+    listen 80;
+    server_name visiotech.me www.visiotech.me famille.visiotech.me www.famille.visiotech.me;
+
+    location /.well-known/acme-challenge/ {
+        root /etc/letsencrypt;
+        try_files $uri $uri/ =404;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name famille.visiotech.me www.famille.visiotech.me;
+
+    ssl_certificate /etc/letsencrypt/live/famille.visiotech.me/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/famille.visiotech.me/privkey.pem;
+
+    location / {
+        proxy_pass http://server-web-1:8001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+#### Générer les certificats SSL
+
+```bash
+cd /home/nospi/projets/visiotech
+docker compose exec certbot certbot certonly --webroot --webroot-path=/etc/letsencrypt -d famille.visiotech.me -d www.famille.visiotech.me
+```
+
+#### Redémarrer Nginx
+
+```bash
+docker compose restart nginx
+```
 
 ---
 
-### Étape 3 : Configurer HTTPS avec Certbot
+### Étape 4 : Pousser sur DockerHub
 
-1. **Configurer Nginx pour le port 80** :
+```bash
+cd /home/nospi/projets/gallery/server
+docker build -t nospi510/gallery:latest
+docker login
+docker push nospi510/gallery:latest
+```
 
-   Modifie `nginx/conf.d/app.conf` pour inclure :
+#### Modifier `docker-compose.yml` pour utiliser l’image :
 
-   ```nginx
-   server {
-       listen 80;
-       server_name famille.visiotech.me www.famille.visiotech.me;
-       location / {
-           proxy_pass http://web:8001;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           proxy_set_header X-Forwarded-Proto $scheme;
-       }
-   }
-   ```
-
-2. **Générer le certificat SSL** :
-
-   ```bash
-   docker-compose exec certbot certbot certonly --webroot --webroot-path=/etc/letsencrypt -d famille.visiotech.me -d www.famille.visiotech.me
-   ```
-
-3. **Restaurer la configuration HTTPS** :
-
-   Remplace `app.conf` par la version complète dans le dépôt GitHub, puis redémarre Nginx :
-
-   ```bash
-   docker-compose restart nginx
-   ```
+```yaml
+services:
+  web:
+    image: nospi510/gallery:latest
+    volumes:
+      - ./app:/app/app
+      - ./run.py:/app/run.py
+    environment:
+      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
+      - SECRET_KEY=${SECRET_KEY}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+    depends_on:
+      - db
+    networks:
+      - app-network
+      - visiotech-network
+    restart: unless-stopped
+```
 
 ---
 
-### Étape 4 : Configurer Fail2Ban
 
-1. **Créer un filtre Fail2Ban** :
+## 🔐 Sécurité
 
-   ```bash
-   sudo nano /etc/fail2ban/filter.d/nginx-gallery-intrusion.conf
-   ```
-
-   Contenu :
-
-   ```ini
-   [Definition]
-   failregex = ^<HOST> -.*"(GET|POST|HEAD).*HTTP.*" (403|404) .*
-   ignoreregex =
-   ```
-
-2. **Créer un jail Fail2Ban** :
-
-   ```bash
-   sudo nano /etc/fail2ban/jail.d/nginx-gallery-intrusion.conf
-   ```
-
-   Contenu :
-
-   ```ini
-   [nginx-gallery-intrusion]
-   enabled = true
-   port = 8080,8443
-   filter = nginx-gallery-intrusion
-   logpath = /home/nospi/projets/gallery/server/nginx/logs/access.log
-   maxretry = 5
-   bantime = 3600
-   findtime = 600
-   action = iptables-multiport[name=nginx-gallery-intrusion, port="8080,8443", protocol=tcp]
-   ```
-
-3. **Redémarrer Fail2Ban** :
-
-   ```bash
-   sudo systemctl restart fail2ban
-   ```
+* **.env** et **certs/** sont exclus du dépôt Git
+* `SECRET_KEY` et `SENDGRID_API_KEY` doivent rester privés
+* **Fail2Ban** surveille les logs Nginx via le jail `intrusion`
 
 ---
 
-### Étape 5 : Pousser sur DockerHub
+## 🧯 Dépannage
 
-1. **Construire l'image Docker** :
+* Journaux :
 
-   ```bash
-   cd /home/nospi/projets/gallery/server
-   docker build -t nospi510/gallery:latest .
-   ```
+```bash
+docker logs server-web-1
+docker logs server-db-1
+docker logs visiotech-nginx-1
+```
 
-2. **Se connecter à DockerHub** :
+* Ressources :
 
-   ```bash
-   docker login
-   ```
+```bash
+docker stats
+```
 
-3. **Pousser l'image** :
+* Certbot :
 
-   ```bash
-   docker push nospi510/gallery:latest
-   ```
-
----
-
-### Étape 6 : Mettre à jour le dépôt GitHub
-
-1. **Ajouter et pousser les fichiers** :
-
-   ```bash
-   cd /home/nospi/projets/gallery/server
-   git add Dockerfile docker-compose.yml nginx/conf.d/app.conf
-   git commit -m "Add Docker configuration for gallery deployment"
-   git push origin main
-   ```
+```bash
+dig famille.visiotech.me
+cat /home/nospi/projets/visiotech/certs/letsencrypt.log
+cat /home/nospi/projets/visiotech/nginx/logs/error.log
+```
 
 ---
 
-## Remarques
+**Déployé avec ❤️ par Nick (nospi510)**
 
-* **Ports** : Les ports 8001 (Gunicorn), 8080 (HTTP), et 8443 (HTTPS) sont utilisés pour éviter les conflits avec `visiotech.me`.
-* **Sécurité** : Ne versionnez pas `.env` ou `certs/`. Vérifiez que `SECRET_KEY` est sécurisé.
-
----
-
-## Dépannage
-
-
-1. **Vérifier les journaux des conteneurs** :
-
-   ```bash
-   docker logs gallery-web-1
-   docker logs gallery-nginx-1
-   docker logs gallery-db-1
-   ```
-
-2. **Vérifier les ressources** :
-
-   ```bash
-   docker stats
-   ```
+```
 
 ---
 
