@@ -1,10 +1,11 @@
+
 # Gallery - Application Flask
 
 Ce projet est une application Flask déployée sur `famille.visiotech.me`, containerisée avec Docker, servie via Gunicorn et Nginx, sécurisée avec des certificats HTTPS via Certbot, et protégée contre les intrusions avec Fail2Ban. La base de données MySQL est initialisée avec le fichier `gallery.sql` au démarrage, et une tâche cron exporte périodiquement la base de données dans `gallery.sql`.
 
 ## Structure du projet
 
-```
+````bash
 
 /home/nospi/projets/gallery/server/
 ├── app/
@@ -18,7 +19,7 @@ Ce projet est une application Flask déployée sur `famille.visiotech.me`, conta
 │   ├── templates/
 │   ├── utils/
 │   ├── V1/
-│   
+│   └── **pycache**/
 ├── gallery.sql
 ├── README.md
 ├── requirements.txt
@@ -57,40 +58,41 @@ Ce projet est une application Flask déployée sur `famille.visiotech.me`, conta
 
 ## Installation des prérequis
 
-1. **Mettre à jour le système** :
-   ```bash
-   sudo apt update && sudo apt upgrade -y
+### 1. Mettre à jour le système
+
+```bash
+sudo apt update && sudo apt upgrade -y
 ````
 
-2. **Installer Docker** :
+### 2. Installer Docker
 
-   ```bash
-   sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
-   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-   sudo apt update
-   sudo apt install -y docker-ce docker-ce-cli containerd.io
-   ```
+```bash
+sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io
+```
 
-3. **Installer Docker Compose** :
+### 3. Installer Docker Compose
 
-   ```bash
-   sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-   sudo chmod +x /usr/local/bin/docker-compose
-   ```
+```bash
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
 
-4. **Ajouter l'utilisateur au groupe Docker** :
+### 4. Ajouter l'utilisateur au groupe Docker
 
-   ```bash
-   sudo usermod -aG docker $USER
-   newgrp docker
-   ```
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
 
-5. **Installer Fail2Ban** :
+### 5. Installer Fail2Ban
 
-   ```bash
-   sudo apt install -y fail2ban
-   ```
+```bash
+sudo apt install -y fail2ban
+```
 
 ---
 
@@ -116,7 +118,7 @@ Ce projet est une application Flask déployée sur `famille.visiotech.me`, conta
   * Variables d'environnement (ne pas versionner).
   * Exemple :
 
-    ```
+    ```env
       SQLALCHEMY_DATABASE_URI=mysql+mysqlconnector://user:password@db/gallery?charset=utf8mb4&collation=utf8mb4_general_ci
       SQLALCHEMY_DATABASE_URII=mysql+mysqlconnector://user:password@localhost/gallery?charset=utf8mb4&collation=utf8mb4_general_ci
       SECRET_KEY=votre-cle-secrete
@@ -125,8 +127,6 @@ Ce projet est une application Flask déployée sur `famille.visiotech.me`, conta
       MYSQL_USER=user
       MYSQL_PASSWORD=password
       SENDGRID_API_KEY= votre-cle-API
-
-    
     ```
 
 ---
@@ -158,27 +158,29 @@ mkdir -p nginx/conf.d nginx/logs certs
    ```
 
 3. **Tester l'application** :
+
    Accédez à `http://localhost:8001` pour tester Flask.
 
 4. **Redémarrer sans le port 8001** :
-   Commenter cette ligne dans `docker-compose.yml` :
 
-   ```yaml
-   ports:
-     - "8001:8001"
-   ```
+   * Commenter cette ligne dans `docker-compose.yml` :
 
-   Puis redémarre :
+     ```yaml
+     ports:
+       - "8001:8001"
+     ```
+   * Puis redémarre :
 
-   ```bash
-   docker-compose up -d
-   ```
+     ```bash
+     docker-compose up -d
+     ```
 
 ---
 
 ### Étape 3 : Configurer HTTPS avec Certbot
 
 1. **Configurer Nginx pour le port 80** :
+
    Modifie `nginx/conf.d/app.conf` pour inclure :
 
    ```nginx
@@ -202,6 +204,7 @@ mkdir -p nginx/conf.d nginx/logs certs
    ```
 
 3. **Restaurer la configuration HTTPS** :
+
    Remplace `app.conf` par la version complète dans le dépôt GitHub, puis redémarre Nginx :
 
    ```bash
@@ -240,10 +243,10 @@ mkdir -p nginx/conf.d nginx/logs certs
    port = 8080,8443
    filter = nginx-gallery-intrusion
    logpath = /home/nospi/projets/gallery/server/nginx/logs/access.log
-   maxretry = 1
+   maxretry = 5
    bantime = 3600
    findtime = 600
-  
+   action = iptables-multiport[name=nginx-gallery-intrusion, port="8080,8443", protocol=tcp]
    ```
 
 3. **Redémarrer Fail2Ban** :
@@ -293,27 +296,26 @@ mkdir -p nginx/conf.d nginx/logs certs
 ## Remarques
 
 * **Ports** : Les ports 8001 (Gunicorn), 8080 (HTTP), et 8443 (HTTPS) sont utilisés pour éviter les conflits avec `visiotech.me`.
-* **Sécurité** : Ne versionnez pas \`.
-
-
-.env`ou`certs/`. Vérifiez que `SECRET\_KEY\` est sécurisé.
+* **Sécurité** : Ne versionnez pas `.env` ou `certs/`. Vérifiez que `SECRET_KEY` est sécurisé.
 
 ---
 
 ## Dépannage
 
-* **Vérifier les journaux des conteneurs** :
 
-  ```bash
-  docker logs gallery-web-1
-  docker logs gallery-nginx-1
-  docker logs gallery-db-1
-  ```
+1. **Vérifier les journaux des conteneurs** :
 
-* **Vérifier les ressources** :
+   ```bash
+   docker logs gallery-web-1
+   docker logs gallery-nginx-1
+   docker logs gallery-db-1
+   ```
 
-  ```bash
-  docker stats
-  ```
+2. **Vérifier les ressources** :
+
+   ```bash
+   docker stats
+   ```
 
 ---
+
